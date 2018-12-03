@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import Auth from './utils/auth';
 import SignUpHero from './components/SignInPage/SignUpHero/SignUpHero';
 import CharitySignUpHero from './components/SignInPage/CharitySignUpHero/CharitySignUpHero';
 import CharityMissionHero from './components/SignInPage/CharityMissionHero/CharityMissionHero';
@@ -13,21 +14,6 @@ import LatestEventsFeedPage from './components/LatestEventsFeed/LatestEventsFeed
 
 
 class App extends Component {
-
-  constructor(props) {
-    super(props)
-    this.state = {
-      userData:""
-    }
-    
-  }
-
-  onUpdate = (val) => {
-    this.setState({
-      userData: val
-    })
-  };
-
   render () {
 
     return (
@@ -36,8 +22,8 @@ class App extends Component {
         <div>
           <Switch>
             <Route exact path="/" component={FullScreenHero} />
-            <Route exact path="/signin" render={(props) => <SignInHero {...props} onUpdate={this.onUpdate}/>} />
-            <Route exact path="/signup" component={SignUpHero} />
+            <Route exact path="/signin" component={Auth(SignInHero,false)}/>
+            <Route exact path="/signup" component={Auth(SignUpHero,false)} />
             <Route exact path="/charitysignup" component={CharitySignUpHero} />
             <Route exact path="/moreinfo" component={LatestEventsFeedPage} />
             <Route exact path="/eventfeed" component={EventFeedPage} />

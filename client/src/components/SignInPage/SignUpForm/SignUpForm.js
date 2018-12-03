@@ -3,6 +3,11 @@ import FormBack from "./../FormBack";
 import "./SignUpForm.css";
 import "../../Button/Button-2.css";
 import API from "../../../utils/API";
+import { update, generateData, isFormValid } from '../../../utils/formActions';
+import Dialog from '@material-ui/core/Dialog';
+
+import { connect } from 'react-redux';
+import { registerUser } from '../../../utils/user_actions';
 
 class SignUpForm extends Component {
   constructor(props) {
@@ -60,14 +65,14 @@ class SignUpForm extends Component {
         .catch(err => console.log(err));
     }
 
-    // this.setState({
-    //   username: "",
-    //   password: "",
-    //   firstname: "",
-    //   lastname: "",
-    //   email: "",
-    //   phonenumber: ""
-    // });
+    this.setState({
+      username: "",
+      password: "",
+      firstname: "",
+      lastname: "",
+      email: "",
+      phonenumber: ""
+    });
   };
 
   render() {

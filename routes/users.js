@@ -2,13 +2,79 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const router = require('express').Router();
 const volunteerController = require('../controllers/volunteerController');
+const authController = require('../controllers/authController');
 const auth = require('./auth');
-const Users = mongoose.model('Users');
-const Passport = require('../config/passport');
-const LocalStorage = require('node-localstorage').LocalStorage;
-const localStorage = new LocalStorage('./scratch');
+//const Users = mongoose.model('Users');
 
 
+router.get('/users/auth',authController.auth,(req,res)=>{
+  res.status(200).json({
+    isAdmin: req.user.role === 0 ? false : true,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
+    lastname: req.user.lastname,
+    role: req.user.role,
+    history: req.user.history
+  })
+
+});
+
+
+router.post('/users/register',(req,res)=>{
+  const user = new User(req.body);
+
+  user.save((err,doc)=>{
+    if(err) return res.json({success:false,err});
+    res.status(200).json({
+      success: true
+     
+    })
+
+  })
+});
+
+/*app.post('/api/users/login', (req,res)=>{
+
+  User.findOne({'email': req.body.email},(err,user) =>{
+    if(!user) return res.json({loginSuccess:false,message:'Auth failed, email not found'});
+
+    user.comparePassword(req.body.password,(err,isMatch)=>{
+      if(!isMatch) return res.json({loginSuccess:false, message:'Wrong password'});
+
+      user.generateToken((err,user)=>{
+        if(err) return res.status(400).send(err);
+        res.cookie('w_auth',user.token).status(200).json({
+          loginSuccess: true
+        })
+
+      })
+
+    })
+
+
+  })
+
+})
+
+
+app.get('/api/users/logout',auth,(req,res)=>{
+  User.findOneAndUpdate(
+    { _id:req.user._id },
+    { token: '' },
+    (err,doc)=>{
+      if(err) return res.json({success:false,err});
+      return res.status(200).send({
+        success: true
+      })
+
+      }
+   
+  )
+
+});
+
+/* OLD ROUTES - SAVING IN CASE I NEED THEM */
 // router.post('/register', auth.optional, (req, res, next) => {
 //   console.log(res)
 // });
@@ -46,7 +112,7 @@ const localStorage = new LocalStorage('./scratch');
 
 // });
 
-router.post('/signin', 
+/*router.post('/signin', 
   passport.authenticate('local', { failureRedirect: '/signin'}),
   function(req, res) {
   
@@ -58,18 +124,18 @@ router.post('/signin',
   }
 );
 
-// router.post('/signin', function(req, res, next) {
-//   passport.authenticate('local', function (err, user, info) {
-//     if (err) { 
-//       return res.send(400);
-//     }
-//     else {
-//       localStorage.setItem('userData', req.user);
-//       console.log(localStorage.getItem('userData'));
-//       res.send(200);
-//     };
-//   })
-// })
+router.post('/signin', function(req, res, next) {
+  passport.authenticate('local', function (err, user, info) {
+    if (err) { 
+      return res.send(400);
+    }
+    else {
+      localStorage.setItem('userData', req.user);
+      console.log(localStorage.getItem('userData'));
+      res.send(200);
+    };
+  })
+})
 
 router.get('/userdata', function(req, res) {
   var data = localStorage.getItem('userData');
@@ -183,6 +249,6 @@ router.get('/current', auth.required, (req, res, next) => {
 
       return res.json({ user: user.toAuthJSON() });
     });
-});
+});*/
 
 module.exports = router;

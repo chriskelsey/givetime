@@ -1,45 +1,101 @@
 const mongoose = require('mongoose');
-const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const SALT_I = 10;
+require('dotenv').config();
 
 const { Schema } = mongoose;
 
-const UsersSchema = new Schema({
-  email: String,
-  hash: String,
-  salt: String,
+const userSchema = mongoose.Schema({
+  email:{
+    type:String,
+    required: true,
+    trim: true,
+    unique: 1
+  },
+  password: {
+    type:String,
+    required: true,
+    minlength: 5
+  },
+  name:{
+    required: true,
+    type:String,
+    maxlength: 100
+  },
+  lastname:{
+    required: true,
+    type:String,
+    maxlength: 100
+  },
+  history:{
+    type: Array,
+    default: []
+  },
+  role:{
+    type:Number,
+    default:0
+
+  },
+  token:{
+    type:String
+  }
 });
 
-UsersSchema.methods.setPassword = function(password) {
-  this.salt = crypto.randomBytes(16).toString('hex');
-  this.hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
-};
+userSchema.pre('save',function(next){
+  var user = this;
 
-UsersSchema.methods.validatePassword = function(password) {
-  const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 512, 'sha512').toString('hex');
-  return this.hash === hash;
-};
+  if(user.isModified('password')){
+    bcrypt.genSalt(SALT_I,function(err,salt) {
+      if(err) return next(err)
+  
+      bcrypt.hash(user.password,salt,function(err,hash){
+        if(err) return next(err);
+        user.password = hash;
+        next();
+      });
+    })
 
-UsersSchema.methods.generateJWT = function() {
-  const today = new Date();
-  const expirationDate = new Date(today);
-  expirationDate.setDate(today.getDate() + 60);
+  } else {
+    next();
+  } 
+  
 
-  return jwt.sign({
-    email: this.email,
-    id: this._id,
-    exp: parseInt(expirationDate.getTime() / 1000, 10),
-  }, 'secret');
+})
+
+userSchema.methods.comparePassword = function(candidatePassword,cb){
+  bcrypt.compare(candidatePassword,this.password,function(err,isMatch){
+    if(err) return cb(err);
+    cb(null,isMatch)
+  })
+
+}
+userSchema.methods.generateToken = function(cb){
+  var user = this;
+  var token = jwt.sign(user._id.toHexString(),process.env.SECRET)
+  
+  user.token = token;
+  user.save(function(err,user){
+    if(err) return cb(err);
+    cb(null,user);
+
+  })
+
 }
 
-UsersSchema.methods.toAuthJSON = function() {
-  return {
-    _id: this._id,
-    email: this.email,
-    token: this.generateJWT(),
-  };
-};
+userSchema.statics.findByToken = function(token,cb){
+  var user = this;
 
-const Users = mongoose.model('Users', UsersSchema);
+  jwt.verify(token,process.env.SECRET,function(err,decode){
+    user.findOne({"_id":decode,"token":token},function(err,user){
+      if(err) return cb(err);
+      cb(null,user);
+    })
+
+  })
+
+}
+
+const Users = mongoose.model('Users', userSchema);
 
 module.exports = Users;
